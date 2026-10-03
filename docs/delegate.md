@@ -51,9 +51,12 @@ preserves authorized account/provider selection, write ownership, and recursion
 limits. Workers do not launch stronger descendants without permission in their
 brief. Persistent sessions are closed only within existing authorization.
 
-Sources live under `~/code/skills/tmux-subagents/skills/delegate/`, alongside
-the `delegate-weaker` and `weaker` compatibility entrypoints. Model policy is in
-`references/models.md` and Paseo binding in `references/paseo.md`. The existing
+Sources live in this repository, [NightMachinery/delegate](https://github.com/NightMachinery/delegate)
+(locally `~/code/skills/delegate/`): `skills/delegate/`, the `delegate-weaker`
+and `weaker` compatibility entrypoints beside it, and `paseo-model-update`.
+Model policy is in `references/models.md` and Paseo binding in
+`references/paseo.md`. This guide is the canonical copy; other repositories
+point here. The existing
 [agfi:agent-skills-link] installs directory links for all configured agents,
 including both Claude accounts. It preserves reference files alongside the
 skill. No daemon or native session restart is needed; skill discovery may need

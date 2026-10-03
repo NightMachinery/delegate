@@ -146,7 +146,7 @@ Report before changing anything, in this shape:
 - **What changes:** timing, what context survives, permissions mode,
   account.
 - **What I need from you:** the gate, plus any choice the request left open
-  (an account not yet authorized, permissions mode for a new agent).
+  (an account not yet authorized).
 
 When the user asked only "can you", stop here.
 
@@ -190,16 +190,21 @@ after confirming that process serves your session; Codex writes a
 
 You cannot become the other model. What you can offer is a new agent on the
 target that continues the work from a briefing you write. Say so, together
-with what is lost: your context beyond the briefing, your permissions mode
-(a new agent starts in its entry's default mode unless `modeId` is given), and
-your session's history as working memory.
+with what is lost: your context beyond the briefing and your session's
+history as working memory. The new agent gets the `auto` permission mode
+unless the user named another one (see below), whatever mode you run in.
 
 At the gate, follow the installed `paseo-handoff` skill, with these
 additions:
 
 - Use the exact `provider/model` resolved above and pass
-  `settings.thinkingOptionId`. Pass `settings.modeId` only as the user chose
-  it or approved it in the preflight.
+  `settings.thinkingOptionId`.
+- Pass `settings.modeId: "auto"` unless the user named another mode. This is
+  the user's standing default. Pass it explicitly: without `modeId` a new
+  agent starts in its entry's own default, which for Codex can be
+  `auto-review`. `auto` is Default Permissions on Codex and the
+  classifier-reviewed Auto mode on Claude. If the target lists no `auto`
+  mode, say so and ask.
 - The receiving agent is on another account or vendor. Before sending the
   briefing, apply the account and data-access check of the `delegate` skill
   when it is installed: everything the new agent can reach is exposed to that

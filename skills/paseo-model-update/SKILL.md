@@ -191,20 +191,22 @@ after confirming that process serves your session; Codex writes a
 You cannot become the other model. What you can offer is a new agent on the
 target that continues the work from a briefing you write. Say so, together
 with what is lost: your context beyond the briefing and your session's
-history as working memory. The new agent gets the `auto` permission mode
-unless the user named another one (see below), whatever mode you run in.
+history as working memory. The new agent gets the automatic-review
+permission mode unless the user named another one (see below), whatever mode
+you run in.
 
 At the gate, follow the installed `paseo-handoff` skill, with these
 additions:
 
 - Use the exact `provider/model` resolved above and pass
   `settings.thinkingOptionId`.
-- Pass `settings.modeId: "auto"` unless the user named another mode. This is
-  the user's standing default. Pass it explicitly: without `modeId` a new
-  agent starts in its entry's own default, which for Codex can be
-  `auto-review`. `auto` is Default Permissions on Codex and the
-  classifier-reviewed Auto mode on Claude. If the target lists no `auto`
-  mode, say so and ask.
+- Unless the user named another mode, pass the mode in which permission
+  prompts are reviewed automatically: `settings.modeId: "auto"` on Claude
+  (Auto mode, a classifier reviews prompts) and `"auto-review"` on Codex (an
+  auto-reviewer handles eligible approvals). This is the user's standing
+  default. Choose by behavior, not by ID: Codex's `auto` is Default
+  Permissions, which asks the user. Pass it explicitly rather than relying on
+  the entry's own default. If the target has no such mode, say so and ask.
 - The receiving agent is on another account or vendor. Before sending the
   briefing, apply the account and data-access check of the `delegate` skill
   when it is installed: everything the new agent can reach is exposed to that

@@ -10,13 +10,14 @@ A remote host is also a data-access boundary.
    supports it. Filter by the authorized account/provider and explicit model
    choice. If that discovery interface is unavailable, report the fallback and
    discover configured providers/models through the supported CLI or API.
-2. Launch one bounded assignment with explicit model and settings. Pass
-   `settings.modeId: "auto"` unless the user chose another mode, directly or
-   through the launch profile they configured: it is the user's standing
-   default, and without it the agent starts in its entry's own default (for
-   Codex possibly `auto-review`). If the provider lists no `auto` mode, report
-   that and ask. An advisor receives an analysis-only brief and permitted
-   data-access scope.
+2. Launch one bounded assignment with explicit model and settings. Unless
+   the user chose another mode, directly or through a launch profile they
+   configured, pass the mode in which permission prompts are reviewed
+   automatically: `auto` on Claude, `auto-review` on Codex. It is the user's
+   standing default. Choose by behavior, not by ID: Codex's `auto` is
+   Default Permissions, which asks the user. If the provider has no such
+   mode, report that and ask. An advisor receives an analysis-only brief and
+   permitted data-access scope.
 3. Use Paseo's returned agent ID as the worker identity. Record assignment ID,
    root/lineage, and owner in supported labels or a private task record. Native
    parentage exists only when the actual calling context supplies it. A human

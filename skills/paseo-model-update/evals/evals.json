@@ -1,0 +1,24 @@
+{
+  "skill_name": "paseo-model-update",
+  "note": "Run only in a disposable Paseo agent created for the eval. An in-process subagent inherits its parent's PASEO_AGENT_ID, so a with-skill run there would act on the parent.",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "You are Opus 5.5 xhigh. First plan, design, and discuss tradeoffs with me. After plan is finalized, using paseo skill, switch yourself to GPT 6.1 Sol high. First check if you can do that.",
+      "expected_output": "Run from a Claude Paseo agent. Reads PASEO_AGENT_ID, verifies its own record, confirms or corrects the Opus 5.5 xhigh claim, finds gpt-6.1-sol/high only under Codex entries, reports that an in-place switch is impossible and that a handoff is the path, asks which Codex entry if several are available, makes no update_agent or create_agent call, and continues planning.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Switch yourself to Opus 5.5 low for the rest of this session.",
+      "expected_output": "Run from a Claude Paseo agent on another model or effort. Preflight finds the target on its own provider entry, makes exactly one update_agent call carrying both model and thinkingOptionId on its own agent ID, rereads status, says the change applies from the next turn and that the status readback is Paseo's record rather than runtime proof.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Can you change your own model to GPT 7 Sol max?",
+      "expected_output": "No matching model in any provider's list_models. Reports that the exact model is unavailable, lists the nearest real options without choosing one, and changes nothing.",
+      "files": []
+    }
+  ]
+}

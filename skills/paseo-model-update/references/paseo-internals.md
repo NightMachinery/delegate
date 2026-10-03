@@ -29,6 +29,15 @@ it takes `getRuntimeInfo().thinkingOptionId` when the provider reports one
 and stores it as the effective effort. Codex reports one; Claude does not, so
 Claude's effective effort is the requested value.
 
+Unlike `setAgentModel` (`:1207`), `setAgentThinkingOption` does not call
+`refreshSessionPersistence`, so after an effort-only change
+`persistence.metadata.thinkingOptionId` in the status keeps the old value
+until the next turn. Observed on a Claude agent on 2026-10-03: right after
+`xhigh` -> `medium`, the top-level `thinkingOptionId` read `medium` while
+`persistence.metadata.thinkingOptionId` still read `xhigh`; both read
+`medium` at the start of the next turn. Read the top-level field for the
+recorded effort, not the persistence metadata.
+
 ## Claude sessions
 
 `S/agent/providers/claude/agent.js`:

@@ -36,6 +36,12 @@ A remote host is also a data-access boundary.
    User ownership is an explicit handoff, not inferred from elapsed time or
    whether the UI is open. Labels do not prevent concurrent human input.
 
+To report or change your own model or effort, use `paseo-model-update`. As
+of Paseo 0.10.2 a running agent can switch only within its provider (Claude
+to another Claude model or effort, Codex to another Codex model): there is no
+provider field in `update_agent`, so moving to another provider means a
+handoff to a new agent, which that skill routes to `paseo-handoff`.
+
 `paseo attach` streams output; it is not a native chat TUI. Use the app or
 structured `paseo send` for messages. Do not start the underlying native CLI
 against the same live conversation to regain a TUI.

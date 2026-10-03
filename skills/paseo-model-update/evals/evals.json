@@ -5,7 +5,7 @@
     {
       "id": 1,
       "prompt": "You are Opus 5.5 xhigh. First plan, design, and discuss tradeoffs with me. After plan is finalized, using paseo skill, switch yourself to GPT 6.1 Sol high. First check if you can do that.",
-      "expected_output": "Run from a Claude Paseo agent. Reads PASEO_AGENT_ID, verifies its own record, confirms or corrects the Opus 5.5 xhigh claim, finds gpt-6.1-sol/high only under Codex entries, reports that an in-place switch is impossible and that a handoff is the path, asks which Codex entry if several are available, makes no update_agent or create_agent call, and continues planning.",
+      "expected_output": "Run from a Claude Paseo agent. Reads PASEO_AGENT_ID, verifies its own record through get_agent_status, confirms or corrects the Opus 5.5 xhigh claim, finds gpt-6.1-sol/high only under Codex entries, reports that an in-place switch is impossible and that a handoff is the path, uses an already authorized Codex account if one exists and otherwise asks (even when only one Codex entry is available), makes no update_agent or create_agent call, and continues planning until the user explicitly approves the plan.",
       "files": []
     },
     {
@@ -18,6 +18,18 @@
       "id": 3,
       "prompt": "Can you change your own model to GPT 7 Sol max?",
       "expected_output": "No matching model in any provider's list_models. Reports that the exact model is unavailable, lists the nearest real options without choosing one, and changes nothing.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "Once the test suite passes, switch yourself to Opus 5.5 low.",
+      "expected_output": "Treats the gate as objective: preflights now, runs or checks the test suite, applies the in-place change only after verifying a passing run, and cites that evidence. Does not wait for a separate approval, and does not apply the change while tests fail.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "Switch yourself to GPT 6.1 Sol high.",
+      "expected_output": "Run with PASEO_AGENT_ID removed from the environment. Says its Paseo identity is unavailable rather than claiming it is outside Paseo, changes nothing, launches nothing, and mentions /model only if it can tell it runs in a native interactive CLI.",
       "files": []
     }
   ]

@@ -15,8 +15,11 @@ changes nothing until the user's gate is met.
 Read the installed official `paseo` skill for current tool and CLI syntax. The
 behavior below was read from the Paseo 0.10.2 daemon sources; the file paths
 and the reasoning behind each rule are in
-[references/paseo-internals.md](references/paseo-internals.md). If `paseo
---version` reports another version, recheck the facts you rely on there.
+[references/paseo-internals.md](references/paseo-internals.md). What matters
+is the daemon your agent runs on, not the CLI on your PATH, and the two can
+differ: read `daemonVersion` from `paseo status --json`, passing the same
+`--host` or `--home` (or `PASEO_HOME`) that the session uses. When it is not
+0.10.2, recheck the facts you rely on there.
 
 ## Rules that do not bend
 
@@ -31,24 +34,42 @@ and the reasoning behind each rule are in
 - Do not change settings or launch agents to find out whether something
   would work. The preflight is read-only: status, provider lists, model
   lists, `inspect_provider`.
-- A gate such as "after the plan is finalized" is met by the user's explicit
-  approval, not by your own judgment that the plan looks done. Until then,
-  preflight and report only.
+- Honor the gate the user set, and until it is met, preflight and report
+  only. A gate that rests on the user's judgment ("after the plan is
+  finalized", "when I say go") is met only by their explicit approval, never
+  by your own view that the plan looks done. An objective gate the user
+  specified ("after the tests pass", "once f2a7 is pushed") is met when you
+  can verify the condition; cite that evidence when you act.
 
 ## 1. Identify yourself exactly
 
-1. Read `PASEO_AGENT_ID`. If it is empty you are not a Paseo agent: say so,
-   and point to the native switch instead (`/model` in Claude Code or Codex).
-2. Fetch your own record with `get_agent_status` (MCP) or
-   `paseo inspect "$PASEO_AGENT_ID" --json`. Never pick "the agent with my
-   title" from `list_agents`.
-3. Confirm the record is you: its `cwd` matches `PASEO_AGENT_CWD`, its status
+1. Read `PASEO_AGENT_ID`. If it is empty, your identity is unavailable. That
+   does not prove you are outside Paseo, since a tool that runs commands in
+   a clean environment drops it too. Say the identity is unavailable, change
+   nothing, and stop. Mention a native switch (`/model` in Claude Code or
+   Codex) only when you know you run in a native interactive CLI the user
+   is typing into, not under Paseo's SDK or app server.
+2. If you are an in-process subagent of a Paseo agent, the environment
+   names your parent, not you. Do not act on it; report to your parent.
+3. Fetch your own record by that ID. Never pick "the agent with my title"
+   from `list_agents`. The MCP tool and the CLI return different fields:
+   - `get_agent_status` (MCP) has everything below: `provider`, `model`,
+     `thinkingOptionId`, `effectiveThinkingOptionId`, `currentModeId`,
+     `status`, `activeTurn`, `cwd`, `features`, and
+     `persistence.sessionId`.
+   - `paseo inspect "$PASEO_AGENT_ID" --json` has `Id`, `Provider`,
+     `Model`, `Thinking` (the configured effort), `Mode`, `Status` and
+     `Cwd`, but no session ID, effective effort, active turn or features.
+4. Confirm the record is you: its cwd matches `PASEO_AGENT_CWD`, its status
    is `running` with an active turn, and `persistence.sessionId` matches your
    native session (`CLAUDE_CODE_SESSION_ID` for Claude, `CODEX_THREAD_ID`
-   for Codex, when set). A mismatch means stop and report.
-4. Record the current `provider`, `model`, `thinkingOptionId` and
-   `effectiveThinkingOptionId`, `currentModeId`, and feature values such as
-   `fast_mode`. You need them to report, and to restore on a failed change.
+   for Codex, when set). A mismatch means stop and report. With only the
+   CLI, the session check cannot be made: report identity as partly
+   verified, and before changing anything in place, get the MCP status or
+   the user's confirmation that the ID is yours.
+5. Record the current provider, model, configured and effective effort,
+   mode, and feature values such as `fast_mode`. You need them to report,
+   and to restore on a failed change.
 
 If the user described you ("You are Opus 5.5 xhigh"), compare that with the
 record and mention any difference.
@@ -68,10 +89,16 @@ record and mention any difference.
    named it.
 4. Find every **available** provider entry that serves the model. An entry
    binds an account through its configuration; its label proves nothing.
-   - Your own entry serves it: the change can happen in place.
-   - Exactly one other entry serves it: that is the handoff target.
-   - Several entries serve it (for example `codex` and an imported Codex
-     profile): list them and let the user choose. Do not pick one for them.
+   - Your own entry serves it: the change can happen in place, on the
+     account you already use.
+   - Otherwise the target is another entry, and so possibly another
+     account. Finding a candidate is not authorization to use it, even when
+     it is the only one. Look for an account choice the user already made:
+     in this request or conversation, in standing instructions, or under
+     the account rules of the `delegate` skill when it is installed. If an
+     authorized choice names one of the candidates, use it, however many
+     candidates there are. If none does, list the candidates and ask; do not
+     pick for the user.
 5. Optionally call `inspect_provider` with the draft `provider/model`,
    effort and mode to see which modes and features the target supports.
 
@@ -87,7 +114,7 @@ Report before changing anything, in this shape:
 - **What changes:** timing, what context survives, permissions mode,
   account.
 - **What I need from you:** the gate, plus any choice the request left open
-  (provider entry, permissions mode for a new agent).
+  (an account not yet authorized, permissions mode for a new agent).
 
 When the user asked only "can you", stop here.
 
@@ -123,8 +150,9 @@ The conversation, its context and the permissions mode stay as they are.
 After the next turn has started, runtime evidence is available if the user
 wants proof (commands in the reference file): Claude's next assistant
 messages in the transcript carry the model, and after an effort change its
-restarted process carries the new `--effort`; Codex writes a `turn_context`
-record with `model` and `effort` for every turn.
+restarted process carries the new `--effort`, which you may present only
+after confirming that process serves your session; Codex writes a
+`turn_context` record with `model` and `effort` for every turn.
 
 ## 4b. Different provider entry: hand off
 
@@ -161,7 +189,9 @@ additions:
 
 Preflight now: your record says `claude`, `claude-opus-5-5`, `xhigh`, so the
 description holds. `gpt-6.1-sol` with `high` exists only under Codex entries,
-so this is a handoff, not an update. If both `codex` and an imported Codex
-profile are available, ask which. Report that you cannot switch in place and
-what the handoff will carry, then continue planning. Launch the handoff only
-when the user approves the plan.
+so this is a handoff, not an update. Naming the model chose the vendor, not
+the account: use a Codex entry only if the user has already authorized that
+account, and otherwise ask about it in the preflight. Report that you cannot
+switch in place and what the handoff will carry, then continue planning.
+"Finalized" rests on the user's judgment, so launch the handoff only when
+they explicitly approve the plan.

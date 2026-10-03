@@ -2,8 +2,11 @@
 
 Read from the Paseo 0.10.2 daemon, installed with the CLI under
 `$(npm root -g)/@getpaseo/cli/node_modules/@getpaseo/server/dist/server/server/`
-(`S` below). `paseo status` prints `daemonVersion`; when it is not 0.10.2,
-grep for the function names rather than trusting the line numbers.
+(`S` below). The version that matters is the connected daemon's
+`daemonVersion` from `paseo status --json` (with the session's `--host`,
+`--home` or `PASEO_HOME`), not `paseo --version`, which reports the local
+CLI. When it is not 0.10.2, grep for the function names rather than trusting
+the line numbers.
 
 ## What `update_agent` does
 
@@ -65,21 +68,38 @@ entry's `defaultMode` (shown by `paseo provider ls`) unless
 
 ## Runtime evidence after the next turn
 
-These read local state only. Run them in the turn *after* the change.
+These read local state only. Run them in the turn *after* the change. They
+call each binary through `command`, so a shell alias or function of the same
+name cannot stand in for it.
 
 Claude, the model of the latest assistant message:
 
 ```sh
-f=$(ls "${CLAUDE_CONFIG_DIR:-$HOME/.claude}"/projects/*/"$CLAUDE_CODE_SESSION_ID".jsonl)
-jq -r 'select(.type == "assistant") | .message.model' "$f" | tail -1
+f=$(command ls "${CLAUDE_CONFIG_DIR:-$HOME/.claude}"/projects/*/"$CLAUDE_CODE_SESSION_ID".jsonl)
+command jq -r 'select(.type == "assistant") | .message.model' "$f" | command tail -1
 ```
 
-Claude, the flags of the process serving this session (in a Bash tool call
-the shell's parent is that process). The full command line contains a Paseo
-bearer token inside `--mcp-config`, so print only the flags you need:
+Claude, the flags of the process serving this session. `$PPID` is often that
+process, but a proxy, wrapper or tool shell can sit in between, so walk up
+the ancestry to the Claude binary and confirm, through Claude's own session
+registry, that it serves `CLAUDE_CODE_SESSION_ID` before trusting its flags.
+The full command line carries a Paseo bearer token inside `--mcp-config`:
+never print it, only the two flags.
 
 ```sh
-ps -o command= -p "$PPID" | tr ' ' '\n' | grep -x -A1 -E -- '--(model|effort)'
+pid=$PPID found=
+while [ "${pid:-0}" -gt 1 ]; do
+  exe=$(command ps -o comm= -p "$pid") || break
+  case "${exe##*/}" in claude|claude.exe) found=$pid; break ;; esac
+  pid=$(command ps -o ppid= -p "$pid" | command tr -d ' ')
+done
+reg="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/sessions/$found.json"
+if [ -n "$found" ] && [ "$(command jq -r .sessionId "$reg" 2>/dev/null)" = "$CLAUDE_CODE_SESSION_ID" ]; then
+  command ps -o command= -p "$found" | command tr ' ' '\n' |
+    command grep -x -A1 -E -- '--(model|effort)'
+else
+  echo "no verified Claude process for this session; no effort evidence"
+fi
 ```
 
 A model-only change does not restart the process, so its `--model` stays
@@ -88,6 +108,6 @@ stale; use the transcript for the model and the process for the effort.
 Codex, the model and effort of the latest turn:
 
 ```sh
-f=$(find "${CODEX_HOME:-$HOME/.codex}/sessions" -name "*${CODEX_THREAD_ID}.jsonl" | head -1)
-jq -c 'select(.type == "turn_context") | .payload | {model, effort}' "$f" | tail -1
+f=$(command find "${CODEX_HOME:-$HOME/.codex}/sessions" -name "*${CODEX_THREAD_ID}.jsonl" | command head -1)
+command jq -c 'select(.type == "turn_context") | .payload | {model, effort}' "$f" | command tail -1
 ```

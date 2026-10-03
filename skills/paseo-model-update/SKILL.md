@@ -1,9 +1,12 @@
 ---
 name: paseo-model-update
-description: Change the model or reasoning effort of the agent you are, when you run inside Paseo, or check whether you can. Use it whenever the user asks you to switch yourself to another model or effort ("switch yourself to GPT 6.1 Sol high", "use Opus low from now on", "after the plan is approved, change to X", "can you change your own model?"), including requests gated on a later event. Runs a read-only preflight, honors the gate, applies a same-provider change with update_agent and verifies it, and turns a cross-provider request into an explicit handoff instead of pretending update_agent can change providers.
+description: Report or change the model and reasoning effort of the agent you are, when you run inside Paseo. Use it whenever the user asks what you are running ("what model/effort are you on?", "verify you are Opus 5.5 xhigh", "did the switch take effect?") or asks you to switch yourself ("switch yourself to GPT 6.1 Sol high", "use Opus low from now on", "after the plan is approved, change to X", "can you change your own model?"), including requests gated on a later event. Status questions get a read-only answer that separates recorded settings, observed runtime and pending changes. Switches get a read-only preflight, honor the gate, apply a same-provider change with update_agent and verify it, and turn a cross-provider request into an explicit handoff instead of pretending update_agent can change providers.
 ---
 
 # Paseo model update
+
+Two jobs: saying truthfully what model and effort you are running (the
+status-only section below), and changing them.
 
 A Paseo agent can change its own model and effort only **within its provider
 entry**. `update_agent` has no provider field: it hands the model ID to the
@@ -41,12 +44,41 @@ differ: read `daemonVersion` from `paseo status --json`, passing the same
   specified ("after the tests pass", "once f2a7 is pushed") is met when you
   can verify the condition; cite that evidence when you act.
 
+## Status only: what am I running?
+
+For "what model and effort are you running?", "verify you are X" or "did my
+change take effect?", answer read-only. Do not call `update_agent` or
+`create_agent`, and do not start a handoff, even when the answer shows a
+mismatch: report it, and offer the switch workflow only as an option.
+
+1. Run the identity guard in step 1 below. Without a verified Paseo identity
+   the recorded layer is unknown; native evidence may still answer the
+   observed layer.
+2. Report three layers, each with its source, because they can disagree:
+   - **Recorded:** what Paseo has configured, from your MCP status: `model`,
+     `thinkingOptionId`, `effectiveThinkingOptionId`, mode. This is what the
+     next turn will use. It echoes requests, so it is not runtime proof.
+   - **Observed:** what is running now, from runtime evidence (commands in
+     the reference file). Claude's model is the `model` of the latest
+     assistant message in your transcript; its effort is the `--effort` of
+     your process, used only after the ancestry and session check passes.
+     Codex records both in the latest `turn_context`.
+   - **Pending:** every field where recorded and observed differ. Say when it
+     applies: effort from the next turn on both providers, a Codex model from
+     the next turn, a Claude model from its next request.
+3. Say **unknown** for any field without evidence. Do not fill it from a
+   product label ("Opus 5.5 (1M context)"), the user's description of you,
+   your parent's model, a marketing alias such as "opus" or "latest", or your
+   own sense of which model you are, including a model name in your
+   instructions: those are claims from launch time, not observations.
+
 ## 1. Identify yourself exactly
 
 1. Read `PASEO_AGENT_ID`. If it is empty, your identity is unavailable. That
    does not prove you are outside Paseo, since a tool that runs commands in
-   a clean environment drops it too. Say the identity is unavailable, change
-   nothing, and stop. Mention a native switch (`/model` in Claude Code or
+   a clean environment drops it too. Say the identity is unavailable and
+   change nothing. For a status question, still report what native evidence
+   shows; otherwise stop. Mention a native switch (`/model` in Claude Code or
    Codex) only when you know you run in a native interactive CLI the user
    is typing into, not under Paseo's SDK or app server.
 2. If you are an in-process subagent of a Paseo agent, the environment

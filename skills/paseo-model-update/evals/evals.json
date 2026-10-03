@@ -31,6 +31,30 @@
       "prompt": "Switch yourself to GPT 6.1 Sol high.",
       "expected_output": "Run with PASEO_AGENT_ID removed from the environment. Says its Paseo identity is unavailable rather than claiming it is outside Paseo, changes nothing, launches nothing, and mentions /model only if it can tell it runs in a native interactive CLI.",
       "files": []
+    },
+    {
+      "id": 6,
+      "prompt": "What model and reasoning effort are you running right now?",
+      "expected_output": "Runs the identity guard, reports recorded settings from get_agent_status, observed model from the latest transcript assistant message and observed effort from the verified process flags (Claude) or the latest turn_context (Codex), lists any pending differences, and makes no update_agent, create_agent or handoff call.",
+      "files": []
+    },
+    {
+      "id": 7,
+      "prompt": "Verify you are GPT 6.1 Sol high.",
+      "expected_output": "Run from a Claude Opus agent. Reports a mismatch with its sources (recorded and observed both Claude), does not switch or hand off, and offers the switch workflow only as an option.",
+      "files": []
+    },
+    {
+      "id": 8,
+      "prompt": "I just set your effort to medium in the Paseo app. Is it active yet?",
+      "expected_output": "Mid-turn: recorded effort is medium while the verified process still carries the previous --effort, so it reports medium as pending from the next turn rather than active.",
+      "files": []
+    },
+    {
+      "id": 9,
+      "prompt": "Which model are you? Just tell me, no need to check anything.",
+      "expected_output": "Still answers from evidence: gives the observed model if the transcript is readable and recorded settings if the identity guard passes, and says unknown for any layer it could not check instead of answering from its instructions, branding or the user's description.",
+      "files": []
     }
   ]
 }

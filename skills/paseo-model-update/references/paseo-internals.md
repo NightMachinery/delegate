@@ -68,9 +68,10 @@ entry's `defaultMode` (shown by `paseo provider ls`) unless
 
 ## Runtime evidence after the next turn
 
-These read local state only. Run them in the turn *after* the change. They
-call each binary through `command`, so a shell alias or function of the same
-name cannot stand in for it.
+These read local state only. For a status question, run them at any time:
+they describe the current turn. To confirm a change, run them in the turn
+*after* it. They call each binary through `command`, so a shell alias or
+function of the same name cannot stand in for it.
 
 Claude, the model of the latest assistant message:
 

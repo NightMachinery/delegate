@@ -47,7 +47,7 @@ the limit, every request has been paying to read the whole context.
 
 Compact only when the context is at least the **threshold** and more turns
 are coming. The threshold is `min_context_tokens` in `~/.compaction.yaml`
-(default 100000); create the file with the default when it is missing:
+(default 128000); create the file with the default when it is missing:
 
 ```sh
 cfg=~/.compaction.yaml
@@ -55,9 +55,9 @@ cfg=~/.compaction.yaml
   '# Read by the paseo-compact and paseo-cache-warmer skills.' \
   '# Never compact an agent whose context is below this many tokens,' \
   '# unless the user asks for that compaction explicitly.' \
-  'min_context_tokens: 100000' > "$cfg"
+  'min_context_tokens: 128000' > "$cfg"
 min=$(command sed -n 's/^min_context_tokens:[[:space:]]*\([0-9][0-9]*\).*/\1/p' "$cfg" | command head -1)
-min=${min:-100000}
+min=${min:-128000}
 ```
 
 Below the threshold compaction loses more than it saves:

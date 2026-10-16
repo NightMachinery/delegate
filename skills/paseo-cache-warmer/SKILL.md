@@ -43,7 +43,7 @@ first with the `paseo-compact` skill.
    expected), do not warm: let the cache go cold, and compact first so the
    eventual cold start is small.
 2. **Is the context large?** If it is at least the threshold in
-   `~/.compaction.yaml` (`min_context_tokens`, default 100k; `paseo-compact`
+   `~/.compaction.yaml` (`min_context_tokens`, default 128k; `paseo-compact`
    says how to read and create it) and holds little that the next turns need
    verbatim, compact it before warming: follow `paseo-compact` ("Compact
    yourself"). Compaction divides the cost

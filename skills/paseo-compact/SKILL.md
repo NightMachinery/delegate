@@ -45,8 +45,36 @@ the limit, every request has been paying to read the whole context.
 
 ### When
 
-Compact when the context is large (roughly 100k tokens or more) and more
-turns are coming, at one of these points:
+Compact only when the context is at least the **threshold** and more turns
+are coming. The threshold is `min_context_tokens` in `~/.compaction.yaml`
+(default 100000); create the file with the default when it is missing:
+
+```sh
+cfg=~/.compaction.yaml
+[ -f "$cfg" ] || printf '%s\n' \
+  '# Read by the paseo-compact and paseo-cache-warmer skills.' \
+  '# Never compact an agent whose context is below this many tokens,' \
+  '# unless the user asks for that compaction explicitly.' \
+  'min_context_tokens: 100000' > "$cfg"
+min=$(command sed -n 's/^min_context_tokens:[[:space:]]*\([0-9][0-9]*\).*/\1/p' "$cfg" | command head -1)
+min=${min:-100000}
+```
+
+Below the threshold compaction loses more than it saves:
+
+- The context right after a compaction is not small. The system prompt,
+  tools, instruction files and the summary come back, and Claude Code also
+  re-attaches the full text of every skill invoked earlier. One coordinator
+  measured 25,801 tokens right after compacting and about 100k a few turns
+  later.
+- Compaction costs one read of the whole context, a summary written as
+  output tokens (about five times the input price), and a fresh cache write
+  of the new context. Shrinking 100k to 25k pays for itself after about ten
+  more requests; shrinking 50k to 25k needs about thirty.
+- Every compaction drops detail that the files do not hold.
+
+The threshold applies to compacting other agents too. It is a floor, not a
+trigger: above it, still wait for one of these points:
 
 - a task, slice or milestone has just finished, and its result is written
   and committed;

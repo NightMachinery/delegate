@@ -42,9 +42,11 @@ first with the `paseo-compact` skill.
    running that will wake it (no children, no background jobs, no user
    expected), do not warm: let the cache go cold, and compact first so the
    eventual cold start is small.
-2. **Is the context large?** If it is above roughly 100k tokens and holds
-   little that the next turns need verbatim, compact it before warming:
-   follow `paseo-compact` ("Compact yourself"). Compaction divides the cost
+2. **Is the context large?** If it is at least the threshold in
+   `~/.compaction.yaml` (`min_context_tokens`, default 100k; `paseo-compact`
+   says how to read and create it) and holds little that the next turns need
+   verbatim, compact it before warming: follow `paseo-compact` ("Compact
+   yourself"). Compaction divides the cost
    of every later keepalive and of any cold start by the same ratio (229k to
    27k tokens in one test, about eight times). Compact right after a turn,
    while the cache is still warm; compaction reads the whole context once,

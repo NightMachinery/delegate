@@ -18,6 +18,11 @@ to the backend's own skill.
   handoff, since Paseo cannot move a running agent to another provider. The
   Paseo 0.10.2 behavior it relies on is cited in its
   [internals reference](skills/paseo-model-update/references/paseo-internals.md).
+- `paseo-compact` compacts a Claude agent's context inside Paseo, its own or
+  another agent's, by sending it the raw prompt `/compact` while it is idle.
+  An agent compacting itself hands the send to a background job that waits for
+  its turn to end. Heartbeats cannot deliver it, because Paseo wraps their
+  prompts.
 
 The full guide is [docs/delegate.md](docs/delegate.md).
 
@@ -25,7 +30,7 @@ The full guide is [docs/delegate.md](docs/delegate.md).
 
 ```sh
 npx skills add NightMachinery/delegate --global \
-  --agent claude-code codex --skill delegate delegate-weaker weaker paseo-model-update
+  --agent claude-code codex --skill delegate delegate-weaker weaker paseo-model-update paseo-compact
 ```
 
 For another Claude profile, rerun with `CLAUDE_CONFIG_DIR` set to its config

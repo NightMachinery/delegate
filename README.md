@@ -18,11 +18,11 @@ to the backend's own skill.
   handoff, since Paseo cannot move a running agent to another provider. The
   Paseo 0.10.2 behavior it relies on is cited in its
   [internals reference](skills/paseo-model-update/references/paseo-internals.md).
-- `paseo-compact` compacts a Claude agent's context inside Paseo, its own or
-  another agent's, by sending it the raw prompt `/compact` while it is idle.
-  An agent compacting itself hands the send to a background job that waits for
-  its turn to end. Heartbeats cannot deliver it, because Paseo wraps their
-  prompts.
+- `paseo-compact` compacts a Claude or Codex agent's context inside Paseo, its
+  own or another agent's, by sending it the raw prompt `/compact` while it is
+  idle. A send to a running agent interrupts its turn, so an agent compacting
+  itself hands the send to a background job that waits for the turn to end.
+  It also covers keepalive heartbeats for the prompt cache and when they pay.
 
 The full guide is [docs/delegate.md](docs/delegate.md).
 

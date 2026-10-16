@@ -20,8 +20,10 @@ to the backend's own skill.
   [internals reference](skills/paseo-model-update/references/paseo-internals.md).
 - `paseo-compact` compacts a Claude or Codex agent's context inside Paseo, its
   own or another agent's, by sending it the raw prompt `/compact` while it is
-  idle. A send to a running agent interrupts its turn, so an agent compacting
-  itself hands the send to a background job that waits for the turn to end.
+  idle. An agent compacts itself at a natural endpoint, after writing its
+  critical state to disk. A send to a running agent interrupts its turn, so
+  an agent compacting itself hands the send to a background job that waits
+  for the turn to end.
 - `paseo-cache-warmer` keeps a long-lived Claude agent's prompt cache warm
   with three keepalive heartbeats at 45-minute gaps, only while work runs,
   says when that beats a cold restart, and compacts with `paseo-compact`

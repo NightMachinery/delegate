@@ -1,6 +1,6 @@
 ---
 name: paseo-compact
-description: Compact the context of a Claude or Codex agent running inside Paseo, your own or another agent's, by sending it the literal prompt "/compact" through Paseo. Use it when the user asks you to compact yourself or another Paseo agent, when a long-running agent should shrink its context before an idle stretch or before keepalive pings (see paseo-cache-warmer), or when you ask whether a heartbeat can trigger compaction (it cannot, because Paseo wraps heartbeat prompts).
+description: Compact the context of a Claude or Codex agent running inside Paseo, your own or another agent's, by sending it the literal prompt "/compact" through Paseo, after persisting critical state to disk. Use it when the user asks you to compact yourself or another Paseo agent; when a long-running agent with a large context reaches a natural endpoint (a task finished, a reply sent while waiting on children or jobs, before an idle stretch or keepalive pings, see paseo-cache-warmer); or when you ask whether a heartbeat can trigger compaction (it cannot, because Paseo wraps heartbeat prompts).
 ---
 
 # Paseo compact
@@ -28,11 +28,67 @@ All on 2026-10-16 with Paseo daemon 0.10.2:
   blue kettle` reached the summarizer (the summary describes its own request
   as focused on the kettle). Haiku followed it only loosely and still
   summarized the rest, so treat focus text as a hint, not a filter.
-- **Claude, send during the agent's own turn:** see the next section.
+- **Claude, self-compaction at a natural endpoint:** the same coordinator,
+  later that day, after writing its state and replying to the user: 277,839
+  to 25,801 tokens, then it resumed from its state files.
+- **Claude, send during the agent's own turn:** see "Compact yourself".
 - **Codex:** a gpt-6-luna agent compacted in 3 seconds. Its rollout gained a
   `compacted` record and a `ContextCompaction` item, and it wrote no reply.
 
-## Why self-compaction goes through a background job
+## Compact yourself
+
+A long-running agent should compact itself at a **natural endpoint**: a
+moment when nothing the next turn needs lives only in its context. Do not
+wait for the CLI's automatic compaction. That fires near the context limit,
+at a moment the CLI picks, possibly in the middle of a task; and long before
+the limit, every request has been paying to read the whole context.
+
+### When
+
+Compact when the context is large (roughly 100k tokens or more) and more
+turns are coming, at one of these points:
+
+- a task, slice or milestone has just finished, and its result is written
+  and committed;
+- you have replied to the user and are waiting on something long: child
+  agents, CI, a deploy, the user's next message;
+- before a long idle stretch, or before keepalive pings start (see
+  `paseo-cache-warmer`).
+
+Do not compact in the middle of delicate work whose details live only in
+context: a half-done edit, a debugging session whose hypotheses are not
+written down, a plan you have not yet saved. Finish it or write it down first.
+
+The size of the context is the sum of `input_tokens`,
+`cache_read_input_tokens` and `cache_creation_input_tokens` in the usage of
+your latest assistant message (transcript path under "Verify"):
+
+```sh
+grep '"type":"assistant"' "$transcript" | tail -1 |
+  python3 -c 'import json,sys; u=json.loads(sys.stdin.read())["message"]["usage"]; print(u["input_tokens"] + u["cache_read_input_tokens"] + u["cache_creation_input_tokens"])'
+```
+
+### First, persist everything critical to disk
+
+The summary is lossy: treat it as an index, not as memory. Before you start
+the waiter, write to files everything the next turn needs:
+
+- the user's instructions that are not yet recorded, verbatim;
+- progress and the next step;
+- decisions made and their reasons, so they are not reopened;
+- the IDs of everything still running: child agents, background jobs,
+  heartbeats, schedules, worktrees, and the paths of the result files they
+  will write;
+- what you learned that is not obvious: causes of errors, traps, measured
+  numbers;
+- uncommitted work: commit it, or note where it is and what state it is in.
+
+Then ask: could a fresh agent continue from these files alone? If not, the
+compaction will lose something. A short resume recipe in the project's
+`CLAUDE.md` or `AGENTS.md` (which files to read, what to check before acting)
+survives intact, because those files are loaded again after compaction.
+
+### Then let the turn end before the compaction starts
 
 A Paseo prompt sent to an agent that is still running **interrupts its turn**.
 Tested: an agent ran `paseo send "$PASEO_AGENT_ID" --prompt "/compact"` in
@@ -50,13 +106,11 @@ compaction then runs as a turn of its own, with nothing to interrupt. That
 is how the 228k-token coordinator above was compacted: it started the job,
 replied to the user and went idle; ten seconds later the job sent `/compact`.
 
-1. Write durable state first: progress, open tasks, the IDs of running jobs
-   and agents, anything the next turn needs. The summary is lossy; treat it
-   as an index, not as memory.
-2. Read your ID from `PASEO_AGENT_ID`; confirm it is non-empty and is you
+1. Read your ID from `PASEO_AGENT_ID`; confirm it is non-empty and is you
    (the `paseo-model-update` skill has the identity check). Never derive it
    from a title.
-3. Start the waiter, then end the turn with a short reply:
+2. Start the waiter, then end the turn with a short reply that tells the
+   user you are compacting:
 
 ```sh
 id=$PASEO_AGENT_ID
@@ -68,8 +122,17 @@ sleep 20
 [ "$(status)" = idle ] && command paseo send "$id" --no-wait --prompt "/compact"
 ```
 
+### After the compaction
+
 The job's completion notice reaches you after the compaction, as a
-background-task event.
+background-task event. It is your first wake-up with the new context:
+
+1. Check that the compaction happened (see "Verify").
+2. Read your state files again before acting, and follow the resume recipe
+   if the project has one.
+3. Check what is actually running (child agents, background jobs) before
+   you rely on the summary: anything it calls running may have finished, and
+   nothing still running should be started a second time.
 
 ## Compact another agent
 
@@ -120,8 +183,6 @@ about eight times cheaper.
 - Compact right after a turn, while the cache is still warm. Compaction reads
   the whole context once; after an idle hour that read is itself a cold
   rebuild of the large context.
-- Compact before a long idle stretch, or before keepalive pings start, not
-  in the middle of delicate work whose details live only in context.
 - To keep the cache warm across idle stretches, use the `paseo-cache-warmer`
   skill, which compacts with this one first.
 - Claude Code's native idle compaction (`idleCompaction` in settings.json) is

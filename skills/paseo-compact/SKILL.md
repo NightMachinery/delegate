@@ -1,6 +1,6 @@
 ---
 name: paseo-compact
-description: Compact the context of a Claude or Codex agent running inside Paseo, your own or another agent's, by sending it the literal prompt "/compact" through Paseo, and keep a long-lived agent's prompt cache warm with keepalive heartbeats. Use it when the user asks you to compact yourself or another Paseo agent, when a long-running coordinator should shrink its context before an idle stretch, when you plan keepalive pings or ask whether they pay, or when you ask whether a heartbeat can trigger compaction (it cannot, because Paseo wraps heartbeat prompts).
+description: Compact the context of a Claude or Codex agent running inside Paseo, your own or another agent's, by sending it the literal prompt "/compact" through Paseo. Use it when the user asks you to compact yourself or another Paseo agent, when a long-running agent should shrink its context before an idle stretch or before keepalive pings (see paseo-cache-warmer), or when you ask whether a heartbeat can trigger compaction (it cannot, because Paseo wraps heartbeat prompts).
 ---
 
 # Paseo compact
@@ -109,46 +109,21 @@ grep '"subtype":"compact_boundary"' "$transcript" | tail -1 |
   `$CODEX_HOME/sessions/YYYY/MM/DD/rollout-*-<session id>.jsonl` (default
   `~/.codex`); look for a line with `"type":"compacted"`.
 
-## Keep the cache warm instead, or as well
+## When it pays
 
-On a subscription the main conversation's prompt cache lives one hour, and
-every request that reads it starts the hour again. A cache read costs about
-a tenth of the input price; a one-hour cache write about twice it. So one
-cold restart of a context costs about as much as twenty warm reads of it.
+On a subscription the main conversation's prompt cache lives one hour. A
+cache read costs about a tenth of the input price and a one-hour cache write
+about twice it, so the size of the context sets the price of every later
+request and of every cold restart. Compacting 229k tokens to 27k made both
+about eight times cheaper.
 
-A keepalive is a heartbeat that makes the agent do one cheap request before
-the hour runs out:
-
-- **Cadence:** every 45 minutes leaves a safe margin. Heartbeats take cron
-  only, which cannot say "every 45 minutes", so use three heartbeats on a
-  three-hour cycle: `7,52 0-23/3 * * *`, `37 1-23/3 * * *` and
-  `22 2-23/3 * * *` fire at exact 45-minute gaps around the clock.
-- **Prompt:** ask for one cheap check (a single shell call that would reveal
-  trouble) and a one-line reply such as "ping ok" with no further tool
-  calls. Everything the ping adds to the context is paid for on every later
-  request.
-- **Work-only:** keep the heartbeats only while work runs that may wake the
-  agent (children, background jobs, a user who may write). Have the ping
-  delete all three when nothing runs, and recreate them when work starts.
-  Keep the cron lines and the prompt in a file so recreating is exact.
-
-**When it pays.** Pings every 45 minutes cost about one cold restart per 15
-hours (twenty pings). Keeping a context warm pays when the agent will
-certainly be woken within that time; for a longer or uncertain gap, let the
-cache go cold. How a subscription plan counts cache reads against its usage
-limits is not published, so check the usage meter while pings run.
-
-**Compact, then warm.** Compaction shrinks every later ping and restart by
-the same ratio, about eight times for the 229k-token context above. Compact
-right after a turn, while the cache is still warm: compaction reads the whole
-context once, and after an idle hour that read is itself a cold rebuild.
-Compact before a long idle stretch, not in the middle of delicate work whose
-details live only in context.
-
-Two caveats:
-
-- On paid overage the cache lifetime drops to five minutes, and keepalives
-  stop paying.
-- Claude Code's native idle compaction (`idleCompaction` in settings.json)
-  is documented for terminal sessions. Do not count on it for an agent that
+- Compact right after a turn, while the cache is still warm. Compaction reads
+  the whole context once; after an idle hour that read is itself a cold
+  rebuild of the large context.
+- Compact before a long idle stretch, or before keepalive pings start, not
+  in the middle of delicate work whose details live only in context.
+- To keep the cache warm across idle stretches, use the `paseo-cache-warmer`
+  skill, which compacts with this one first.
+- Claude Code's native idle compaction (`idleCompaction` in settings.json) is
+  documented for terminal sessions. Do not count on it for an agent that
   Paseo runs through the SDK.

@@ -22,7 +22,10 @@ to the backend's own skill.
   own or another agent's, by sending it the raw prompt `/compact` while it is
   idle. A send to a running agent interrupts its turn, so an agent compacting
   itself hands the send to a background job that waits for the turn to end.
-  It also covers keepalive heartbeats for the prompt cache and when they pay.
+- `paseo-cache-warmer` keeps a long-lived Claude agent's prompt cache warm
+  with three keepalive heartbeats at 45-minute gaps, only while work runs,
+  says when that beats a cold restart, and compacts with `paseo-compact`
+  first so every ping costs less.
 
 The full guide is [docs/delegate.md](docs/delegate.md).
 
@@ -30,7 +33,7 @@ The full guide is [docs/delegate.md](docs/delegate.md).
 
 ```sh
 npx skills add NightMachinery/delegate --global \
-  --agent claude-code codex --skill delegate delegate-weaker weaker paseo-model-update paseo-compact
+  --agent claude-code codex --skill delegate delegate-weaker weaker paseo-model-update paseo-compact paseo-cache-warmer
 ```
 
 For another Claude profile, rerun with `CLAUDE_CONFIG_DIR` set to its config

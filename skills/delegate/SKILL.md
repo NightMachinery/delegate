@@ -67,13 +67,14 @@ that cannot be enforced rather than claiming a guarantee.
 
 - **In-process:** prefer the runtime's agent tool for a bounded worker when it
   offers the requested model and no persistent user-accessible session is needed.
-- **Paseo:** when persistence, user visibility, or an unavailable in-process
-  model requires another backend, prefer Paseo when already inside Paseo and the
-  selected provider/account is configured. Read [Paseo binding](references/paseo.md)
-  and the installed official `paseo` skill before operating it.
-- **tmux:** use native interactive CLI workers when the user needs the full
-  TUI, a custom launcher, a provider/account unavailable in Paseo, or a host
-  without a daemon. Read the installed `tmux-subagents` skill; preserve its
+- **Paseo:** inside Paseo (`PASEO_AGENT_ID` is set), Paseo is the backend for
+  every worker that is not in-process: another provider, another account, or
+  any worker that needs persistence or user visibility. Read
+  [Paseo binding](references/paseo.md) and the installed official `paseo` skill
+  before operating it.
+- **tmux:** use native interactive CLI workers only when the user asks for
+  tmux or the full TUI, needs a custom launcher, or the provider/account is
+  unavailable in Paseo, or outside Paseo (a host without a daemon). Read the installed `tmux-subagents` skill; preserve its
   launch, resume, registry, notification, and cleanup protocol.
 
 Honor an explicitly selected backend. If its required skill or requested model

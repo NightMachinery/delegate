@@ -62,7 +62,7 @@ These skills name their backends and do not bundle them:
 
 Standalone companions cover durable run state and coordinator replacement in
 [long-run-handoff](https://github.com/NightMachinery/long-run-handoff), completion
-notifications in [event-driven-waiting](https://github.com/NightMachinery/event-driven-waiting),
+notifications in [event-driven-agents](https://github.com/NightMachinery/event-driven-agents),
 and usage headroom in [quota-management](https://github.com/NightMachinery/quota-management).
 
 ## History

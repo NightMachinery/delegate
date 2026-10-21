@@ -42,8 +42,10 @@ upstream Paseo's command catalog or move tmux's scripts and state.
 
 Normal Paseo/in-process workers can return a final response with task identity,
 outcome, evidence, and verification. Tmux retains its result-file protocol.
-Persistent long runs need checkpoints and durable artifacts. Notifications and
-idle status prompt review; they do not prove task completion.
+For persistent runs, [long-run-handoff](https://github.com/NightMachinery/long-run-handoff)
+owns checkpoints and durable artifacts; [event-driven-waiting](https://github.com/NightMachinery/event-driven-waiting)
+owns completion wakeups. Notifications and idle status prompt review; they do not
+prove task completion.
 
 Account selection is independent of worker capability. A display label or
 sanitized prompt does not isolate accessible files and tools. The workflow

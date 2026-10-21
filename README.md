@@ -60,9 +60,10 @@ These skills name their backends and do not bundle them:
   command reference.
 - **In-process:** the runtime's own agent tool.
 
-Research-run companions, such as durable run state and quota-aware
-coordinator handoff, are in
-[NightMachinery/research-agent-ops](https://github.com/NightMachinery/research-agent-ops).
+Standalone companions cover durable run state and coordinator replacement in
+[long-run-handoff](https://github.com/NightMachinery/long-run-handoff), completion
+notifications in [event-driven-waiting](https://github.com/NightMachinery/event-driven-waiting),
+and usage headroom in [quota-management](https://github.com/NightMachinery/quota-management).
 
 ## History
 

@@ -169,10 +169,17 @@ background-task event. It is your first wake-up with the new context:
 2. If the agent holds state only in its context, tell it first to write that
    state to its files.
 3. Send `/compact`, then verify.
+4. Send nothing else until that compaction has finished. A prompt that arrives
+   while it is still running cancels it, and the agent then carries on with its
+   whole context (seen 2026-10-27).
 
 A finish notification after a Claude compaction repeats the agent's previous
 reply, because compaction adds no assistant message; do not read it as a new
-answer. No finish notification arrived for the Codex compaction.
+answer. No finish notification arrived for the Codex compaction. The reply can
+also say "Compaction canceled." when the compaction succeeded: on 2026-10-27 a
+Claude agent went from 263k to 13k tokens behind exactly that text. Judge only
+by the context size in `get_agent_status` (`contextWindowUsedTokens`) or
+`paseo inspect`.
 
 ## What cannot deliver it
 

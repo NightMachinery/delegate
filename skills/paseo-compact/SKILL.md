@@ -1,19 +1,26 @@
 ---
 name: paseo-compact
-description: Compact the context of a Claude or Codex agent running inside Paseo, your own or another agent's, by sending it the literal prompt "/compact" through Paseo, after persisting critical state to disk. Use it when the user asks you to compact yourself or another Paseo agent; when a long-running agent with a large context reaches a natural endpoint (a task finished, a reply sent while waiting on children or jobs, before an idle stretch or keepalive pings, see paseo-cache-warmer); or when you ask whether a heartbeat can trigger compaction (it cannot, because Paseo wraps heartbeat prompts).
+description: Compact the context of a Claude or Codex agent running inside Paseo, your own or another agent's, by sending it the literal prompt "/compact" through the Paseo CLI without a sender (env -u PASEO_AGENT_ID), after persisting critical state to disk. Use it when the user asks you to compact yourself or another Paseo agent; when a long-running agent with a large context reaches a natural endpoint (a task finished, a reply sent while waiting on children or jobs, before an idle stretch or keepalive pings, see paseo-cache-warmer); or when you ask whether a heartbeat can trigger compaction (it cannot, because Paseo wraps heartbeat prompts).
 ---
 
 # Paseo compact
 
 Paseo passes a prompt that is exactly `/compact` (optionally followed by focus
-text) to the agent's CLI as a command, not as a message, so any sender that
-can deliver that raw prompt compacts the agent:
+text) to the agent's CLI as a command, but only when the prompt has no
+sending agent. Send it with `PASEO_AGENT_ID` removed from the environment:
 
 ```sh
-command paseo send <agent-id> --no-wait --prompt "/compact"
+env -u PASEO_AGENT_ID command paseo send <agent-id> --no-wait --prompt "/compact"
 ```
 
-The MCP tool works the same: `send_agent_prompt` with `prompt: "/compact"`.
+Since Paseo 0.14 (#6373, #7561, #7990), `paseo send` reads the sender from
+`PASEO_AGENT_ID`, and every prompt that has a sender is wrapped in a
+`<paseo-system kind="agent-message">` envelope, slash commands included. A
+plain `paseo send` from an agent's shell, or the `send_agent_prompt` MCP tool
+called by an agent, therefore delivers `/compact` as ordinary text and
+nothing compacts (seen three times on 2026-11-03, Paseo 0.14.0). With the
+variable removed, the CLI sends as a human and the prompt stays raw. Typing
+`/compact` in the Paseo app also works.
 
 ## What was verified
 
@@ -32,6 +39,10 @@ All on 2026-10-16 with Paseo daemon 0.10.2:
   later that day, after writing its state and replying to the user: 277,839
   to 25,801 tokens, then it resumed from its state files.
 - **Claude, send during the agent's own turn:** see "Compact yourself".
+- **Claude, Paseo 0.14.0, 2026-11-03:** a Haiku 4.5 agent compacted from
+  34,019 to 2,333 tokens (`trigger: "manual"`) after another agent ran the
+  `env -u PASEO_AGENT_ID` send above. The MCP results in this list predate
+  the envelope; do not use the MCP tool for this now.
 - **Codex:** a gpt-6-luna agent compacted in 3 seconds. Its rollout gained a
   `compacted` record and a `ContextCompaction` item, and it wrote no reply.
 
@@ -147,7 +158,8 @@ status() { command paseo inspect "$id" --json 2>/dev/null |
 n=0
 until [ "$(status)" = idle ] || [ "$n" -ge 180 ]; do n=$((n + 1)); sleep 10; done
 sleep 20
-[ "$(status)" = idle ] && command paseo send "$id" --no-wait --prompt "/compact"
+[ "$(status)" = idle ] &&
+  env -u PASEO_AGENT_ID command paseo send "$id" --no-wait --prompt "/compact"
 ```
 
 ### After the compaction
@@ -168,7 +180,8 @@ background-task event. It is your first wake-up with the new context:
    the status is `idle`; a send to a `running` agent interrupts it.
 2. If the agent holds state only in its context, tell it first to write that
    state to its files.
-3. Send `/compact`, then verify.
+3. Send `/compact` with the `env -u PASEO_AGENT_ID` command above, then
+   verify.
 4. Send nothing else until that compaction has finished. A prompt that arrives
    while it is still running cancels it, and the agent then carries on with its
    whole context (seen 2026-10-27).

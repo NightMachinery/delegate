@@ -13,8 +13,22 @@ providers as a single reliable capability ladder.
   extraction, repetitive transformations, and routine checks. Use **GPT 6.1 Sol**
   (`gpt-6.1-sol`, OR ANY LATER AVAILABLE VERSIONS) for bounded implementation or edits needing more local reasoning.
 
+- **Gemini through agy:** use **Gemini 4 Hydrogen at high effort**
+  (`gemini-4-hydrogen-high`) for any agy worker, unless the user names another
+  model. The user approves it as a standing route (2026-11-13) even though it
+  is another provider and account: it spends neither Claude nor GPT quota, so it
+  suits mechanical or bounded work, parallel workers and cross-provider review
+  when the parent's own quota is the constraint. The approval does not lift the
+  data-access check in the skill: the brief and every file the worker can
+  reach go to Google. Hydrogen draws on the agy
+  account's general Gemini five-hour and weekly buckets (user's observation,
+  2026-11-13); Gemini 4 Argon has its own weekly bucket and is used only on
+  request (notes kept in `tmux-subagents`' `references/argon-readonly.md`).
+  Inside Paseo, launch it through the private `paseo-agy-driver` skill where
+  installed, otherwise through `tmux-subagents`.
+
 These are the user's routing preferences, not a claim about exact prices or
-separate quota pools.
+separate quota pools beyond the measured ones named above.
 If the requested family or explicit selection is unavailable, report it and
 continue locally when feasible. Do not silently substitute an expensive model.
 
@@ -46,7 +60,8 @@ not automatically stronger and does not bypass account boundaries.
 For **stronger**, require an explicit user request or evidence of a reasoning
 bottleneck, such as a failed focused correction. Use the user-selected model or
 a verified appropriate higher tier within the same provider/account. The user's
-known routing tiers are Opus/Fable for Claude and Luna/Sol/Astra for Codex;
+known routing tiers are Opus/Fable for Claude, Luna/Sol/Astra for Codex and
+Hydrogen High/XHigh for agy (Argon is not above Hydrogen);
 resolve actual available model IDs and do not infer a tier from profile labels
 or vendor marketing. Without an explicit user request, stronger escalation must
 not exceed the root session's model, or its effort on that same model. Effort

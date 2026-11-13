@@ -13,9 +13,10 @@ A remote host is also a data-access boundary.
 2. Launch one bounded assignment with explicit model and settings. Unless
    the user chose another mode, directly or through a launch profile they
    configured, pass the mode in which permission prompts are reviewed
-   automatically: `auto` on Claude, `auto-review` on Codex. It is the user's
-   standing default. Choose by behavior, not by ID: Codex's `auto` is
-   Default Permissions, which asks the user. If the provider has no such
+   automatically: `auto` on Claude, `auto-review` on Codex, `auto` on the
+   `paseo-agy-driver` agy provider. It is the user's standing default. Choose
+   by behavior, not by ID: Codex's `auto` is Default Permissions, which asks
+   the user. If the provider has no such
    mode, report that and ask. An advisor receives an analysis-only brief and
    permitted data-access scope.
 3. Use Paseo's returned agent ID as the worker identity. Record assignment ID,

@@ -13,9 +13,9 @@ providers as a single reliable capability ladder.
   extraction, repetitive transformations, and routine checks. Use **GPT 6.1 Sol**
   (`gpt-6.1-sol`, OR ANY LATER AVAILABLE VERSIONS) for bounded implementation or edits needing more local reasoning.
 
-- **Gemini through agy:** use **Gemini 4 Hydrogen at high effort**
-  (`gemini-4-hydrogen-high`) for any agy worker, unless the user names another
-  model. The user approves it as a standing route (2026-11-13) even though it
+- **Gemini through agy:** use **Gemini 4 Hydrogen at XHigh effort**
+  (`gemini-4-hydrogen-xhigh`; High until 2026-11-14) for any agy worker, unless
+  the user names another model. The user approves it as a standing route (2026-11-13) even though it
   is another provider and account: it spends neither Claude nor GPT quota, so it
   suits mechanical or bounded work, parallel workers and cross-provider review
   when the parent's own quota is the constraint. The approval does not lift the

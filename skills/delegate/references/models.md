@@ -10,8 +10,9 @@ providers as a single reliable capability ladder.
 - **Fable / Claude:** use **Opus**, selecting the available Opus model through
   the runtime's model selector rather than inheriting Fable.
 - **Astra / Codex:** use **GPT 6 Luna** (`gpt-6-luna`, with max effort level) for straightforward
-  extraction, repetitive transformations, and routine checks. Use **GPT 6.1 Sol**
-  (`gpt-6.1-sol`, OR ANY LATER AVAILABLE VERSIONS) for bounded implementation or edits needing more local reasoning.
+  extraction, repetitive transformations, and routine checks. Use **GPT 6.2 Sol**
+  (`gpt-6.2-sol`, OR ANY LATER AVAILABLE VERSIONS) for bounded implementation or edits needing more local reasoning.
+  An Astra parent means the newest Astra (`gpt-6.2-astra` since 2026-11-17).
 
 - **Gemini through agy:** use **Gemini 4 Hydrogen at XHigh effort**
   (`gemini-4-hydrogen-xhigh`; High until 2026-11-14) for any agy worker, unless

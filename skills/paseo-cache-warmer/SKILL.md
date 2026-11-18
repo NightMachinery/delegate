@@ -1,6 +1,6 @@
 ---
 name: paseo-cache-warmer
-description: Keep a long-lived Claude agent's prompt cache warm inside Paseo with keepalive heartbeats, and decide when that pays. Use it when a coordinator or other long-running Paseo agent will sit idle between wake-ups (children finishing, background jobs, user messages) and each cold restart would rebuild a large context, when the user asks about keepalive pings or cache warming, or when you must decide between warming the cache, compacting first, and letting it go cold. It reuses the paseo-compact skill to shrink the context before warming.
+description: Keep a long-lived Claude agent's prompt cache warm inside Paseo with keepalive heartbeats, and decide when that pays. Use it when a coordinator or other long-running Paseo agent will sit idle between wake-ups (children finishing, background jobs, user messages) and each cold restart would rebuild a large context, when the user asks about keepalive pings or cache warming, or when you must decide between warming the cache, compacting first, and letting it go cold. It prefers the agent-quotas keeper (agent-desk cache warm, agent-desk standby) where that daemon runs, and reuses the paseo-compact skill to shrink the context before warming.
 ---
 
 # Paseo cache warmer
@@ -15,6 +15,30 @@ A **keepalive** is a heartbeat that makes the agent do one cheap request
 before the cache expires. This skill sets keepalives up, tears them down, and
 says when they pay. To make every keepalive cheaper, it shrinks the context
 first with the `paseo-compact` skill.
+
+## Use the keeper where it runs
+
+Where the agent-quotas daemon runs (its socket is
+`~/.local/state/agent-quotas/agent-quotas.sock`), do not create heartbeats.
+Set the agent's cache policy instead, and the daemon times the pings:
+
+- `agent-desk cache warm [--warm-hours N]` (or `agent-quotas keep set --cache
+  warm`): ping just before the cache expires while the agent is idle, until
+  `warm_hours` (default 6) after its last real turn; then compact if the
+  context is big. Every real turn starts the window again.
+- `agent-desk cache compact`: no pings; compact once just before expiry if
+  the context is big.
+- `agent-desk standby`: end warming for good when the work is done or blocked
+  for longer than the window. Setting `warm` again undoes it.
+- `agent-desk cache` (or `agent-quotas keep status`) shows the policy, phase
+  and expiry; the desk dashboard shows and sets the same.
+
+A keeper ping is a bare `[agent-quotas keepalive]` marker with no
+instructions: the agent need not decide whether to stop, because the window
+and standby do that. The keeper pings only an idle agent with no pending
+permission, and shares the per-agent lock with desk sends, so a ping never
+lands on top of a message. The decision rules below still apply; the
+heartbeat recipe after them is for hosts without the daemon.
 
 ## Facts this rests on
 
@@ -119,5 +143,3 @@ five-minute lifetime. Check this on the first pings of every new setup.
   whether heartbeats wait or interrupt is unknown. Keep pings rare enough
   that a collision is unlikely, and if one interrupts a turn, say so in the
   run state.
-- A plugin that warms each opted-in agent from Paseo's turn events, without
-  heartbeats. None exists yet.

@@ -18,7 +18,10 @@ A remote host is also a data-access boundary.
    by behavior, not by ID: Codex's `auto` is Default Permissions, which asks
    the user. If the provider has no such
    mode, report that and ask. An advisor receives an analysis-only brief and
-   permitted data-access scope.
+   permitted data-access scope. Launch a worker the user will not watch as
+   background (`background: true` on `create_agent`, `paseo run --background`)
+   so it and its children stay out of the sidebar; keep it visible when the
+   user asked to see or talk to it. The flag is fixed at creation.
 3. Use Paseo's returned agent ID as the worker identity. Record assignment ID,
    root/lineage, and owner in supported labels or a private task record. Native
    parentage exists only when the actual calling context supplies it. A human
